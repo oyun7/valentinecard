@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>For You ❤️</title>
+
+<style>
+:root {
+  --bg-dark: #0f0f14;
+  --accent: #ff2e63;
+  --accent-soft: #ff6b81;
+  --text: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  height: 100dvh;
+  background: var(--bg-dark);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  color: var(--text);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 1.5s ease;
+}
+
+.container {
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.heart {
+  font-size: 60px;
+  animation: pulse 2s infinite ease-in-out;
+  transition: transform 0.2s ease;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.holding {
+  animation: strongPulse 0.6s infinite ease-in-out;
+}
+
+@keyframes strongPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.subtitle {
+  margin-top: 20px;
+  font-size: 16px;
+  opacity: 0.6;
+  letter-spacing: 1px;
+}
+
+.message {
+  margin-top: 40px;
+  font-size: 22px;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+
+.show {
+  opacity: 1;
+}
+
+.final {
+  margin-top: 30px;
+  font-size: 18px;
+  opacity: 0;
+  transition: opacity 2s ease;
+}
+
+.gradient-bg {
+  background: radial-gradient(circle at center, #2a001a 0%, #0f0f14 70%);
+}
+
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="container">
+  <div class="heart" id="heart">❤️</div>
+  <div class="subtitle">Подержи...</div>
+  <div class="message" id="message">С каждым ударом — ты.</div>
+  <div class="final" id="final">Будь моей навсегда 💌<br>14.02.2026</div>
+</div>
+
+<script>
+const heart = document.getElementById("heart");
+const message = document.getElementById("message");
+const final = document.getElementById("final");
+const body = document.body;
+
+let holdTimer;
+let holdStart;
+
+function startHold() {
+  heart.classList.add("holding");
+  holdStart = Date.now();
+
+  if (navigator.vibrate) navigator.vibrate(50);
+
+  holdTimer = setTimeout(() => {
+    body.classList.add("gradient-bg");
+    message.classList.add("show");
+
+    setTimeout(() => {
+      final.classList.add("show");
+      launchHearts();
+    }, 2000);
+
+  }, 3000);
+}
+
+function endHold() {
+  heart.classList.remove("holding");
+  clearTimeout(holdTimer);
+}
+
+heart.addEventListener("touchstart", startHold);
+heart.addEventListener("touchend", endHold);
+heart.addEventListener("mousedown", startHold);
+heart.addEventListener("mouseup", endHold);
+
+function launchHearts() {
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const hearts = [];
+
+  for (let i = 0; i < 50; i++) {
+    hearts.push({
+      x: Math.random() * canvas.width,
+      y: canvas.height,
+      size: Math.random() * 20 + 10,
+      speed: Math.random() * 3 + 1,
+      opacity: Math.random()
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    hearts.forEach(h => {
+      ctx.globalAlpha = h.opacity;
+      ctx.font = h.size + "px serif";
+      ctx.fillText("❤️", h.x, h.y);
+      h.y -= h.speed;
+    });
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+}
+</script>
+
+</body>
+</html>
