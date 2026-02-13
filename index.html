@@ -16,19 +16,19 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   height: 100dvh;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   background: radial-gradient(circle at center, #1a0012 0%, #0f0f14 70%);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--text);
 }
 
@@ -40,14 +40,16 @@ body {
 .heart {
   font-size: 90vw;
   line-height: 0.8;
-  cursor: pointer;
+  animation: heartbeat 1.6s infinite;
   filter: drop-shadow(0 0 40px rgba(255,46,99,0.7));
-  animation: pulse 2s infinite ease-in-out;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+@keyframes heartbeat {
+  0%   { transform: scale(1); }
+  20%  { transform: scale(1.08); }
+  40%  { transform: scale(0.95); }
+  60%  { transform: scale(1.12); }
+  80%  { transform: scale(0.98); }
   100% { transform: scale(1); }
 }
 
@@ -59,13 +61,8 @@ body {
 
 .message {
   margin-top: 30px;
-  font-size: 22px;
-  opacity: 0;
-  transition: opacity 1.5s ease;
-}
-
-.show {
-  opacity: 1;
+  font-size: 24px;
+  min-height: 30px;
 }
 
 canvas {
@@ -84,7 +81,7 @@ canvas {
 <div class="container">
   <div class="heart" id="heart">❤️</div>
   <div class="subtitle">Подержи...</div>
-  <div class="message" id="message">С каждым ударом — ты.</div>
+  <div class="message" id="message"></div>
 </div>
 
 <script>
@@ -98,13 +95,12 @@ canvas.height = window.innerHeight;
 
 let holdTimer;
 let particles = [];
-let gravity = 0.4;
 let tilt = 0;
 
 function startHold() {
   holdTimer = setTimeout(() => {
     explodeHeart();
-    message.classList.add("show");
+    typeText("С каждым ударом — ты.");
   }, 3000);
 }
 
@@ -117,17 +113,27 @@ heart.addEventListener("touchend", endHold);
 heart.addEventListener("mousedown", startHold);
 heart.addEventListener("mouseup", endHold);
 
+function typeText(text) {
+  let i = 0;
+  const interval = setInterval(() => {
+    message.textContent += text[i];
+    i++;
+    if (i >= text.length) clearInterval(interval);
+  }, 60);
+}
+
 function explodeHeart() {
   heart.style.display = "none";
 
-  for (let i = 0; i < 150; i++) {
+  for (let i = 0; i < 180; i++) {
     particles.push({
       x: canvas.width / 2,
       y: canvas.height / 2,
-      vx: (Math.random() - 0.5) * 10,
-      vy: (Math.random() - 0.5) * 10,
-      size: Math.random() * 20 + 10,
-      rotation: Math.random() * 360
+      vx: (Math.random() - 0.5) * 6,
+      vy: (Math.random() - 0.5) * 6,
+      size: Math.random() * 18 + 10,
+      rotation: Math.random() * Math.PI,
+      spin: (Math.random() - 0.5) * 0.2
     });
   }
 }
@@ -136,21 +142,19 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   particles.forEach(p => {
-    p.vy += gravity;
-    p.vx += tilt * 0.1;
+
+    p.vx += (Math.random() - 0.5) * 0.2;
+    p.vy += (Math.random() - 0.5) * 0.2;
+
+    p.vx += tilt * 0.05;
 
     p.x += p.vx;
     p.y += p.vy;
 
-    if (p.y > canvas.height - 20) {
-      p.y = canvas.height - 20;
-      p.vy *= -0.6;
-      p.vx *= 0.95;
-    }
+    p.rotation += p.spin;
 
-    if (p.x < 0 || p.x > canvas.width) {
-      p.vx *= -0.8;
-    }
+    if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+    if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
 
     ctx.save();
     ctx.translate(p.x, p.y);
@@ -165,10 +169,10 @@ function draw() {
 
 draw();
 
-/* Наклон только для движения влево/вправо */
+/* Лёгкое влияние наклона */
 if (window.DeviceOrientationEvent) {
   window.addEventListener("deviceorientation", e => {
-    tilt = e.gamma / 30;
+    tilt = e.gamma / 40;
   });
 }
 </script>
