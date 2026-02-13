@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Love Reveal ❤️</title>
 
+<!-- Подключаем шрифт -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
 <style>
 :root {
   --bg: #0f0f14;
@@ -27,7 +32,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Great Vibes', cursive;
   color: var(--text);
 }
 
@@ -40,15 +45,16 @@ canvas {
 }
 
 .message {
-  font-size: 28px;
-  margin-bottom: 20px;
+  font-size: 6vw; /* адаптивно для ширины экрана */
+  margin-bottom: 3vh;
   min-height: 40px;
   z-index: 2;
   text-align: center;
+  transition: opacity 2s ease;
 }
 
 .finalText {
-  font-size: 60px;
+  font-size: 20vw; /* адаптивно для ширины экрана */
   font-weight: bold;
   color: #ff2e63;
   position: absolute;
@@ -91,7 +97,7 @@ for (let i = 0; i < particleCount; i++) {
     y: Math.random() * canvas.height,
     vx: (Math.random() - 0.5) * 2,
     vy: (Math.random() - 0.5) * 2,
-    size: Math.random() * 18 + 8,
+    size: Math.random() * (canvas.width*0.03) + (canvas.width*0.02), // адаптивно
     rotation: Math.random() * Math.PI,
     spin: (Math.random() - 0.5) * 0.05,
     targetX: null,
@@ -107,23 +113,23 @@ function typeText() {
   if (index < text.length) {
     message.textContent += text[index];
     index++;
-    setTimeout(typeText, 100);
+    setTimeout(typeText, 120);
   } else {
     setTimeout(formHeartShape, 800);
   }
 }
 
-// Создание координат для большого сердца
+// Создание координат для большого сердца (формула parametric)
 function generateHeartShapePoints(count) {
   const points = [];
-  const scale = Math.min(canvas.width, canvas.height) / 25;
+  const scale = canvas.width / 4; // адаптивно под ширину экрана
   for (let i = 0; i < count; i++) {
     const t = Math.random() * Math.PI * 2;
     const x = 16 * Math.pow(Math.sin(t), 3);
     const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t));
     points.push({
-      x: centerX + x * scale + (Math.random()-0.5)*5,
-      y: centerY + y * scale + (Math.random()-0.5)*5
+      x: centerX + x * scale / 16 + (Math.random()-0.5)*5,
+      y: centerY + y * scale / 16 + (Math.random()-0.5)*5
     });
   }
   return points;
@@ -137,6 +143,10 @@ function formHeartShape() {
     p.targetY = targets[i].y;
   });
 
+  // Плавно скрываем текст
+  message.style.opacity = "0";
+
+  // Показываем большой текст внутри сердца
   finalText.style.opacity = "1";
 }
 
@@ -146,6 +156,7 @@ function draw() {
 
   particles.forEach(p => {
     if (p.targetX !== null) {
+      // Линейная интерполяция к цели
       p.x += (p.targetX - p.x) * 0.07;
       p.y += (p.targetY - p.y) * 0.07;
     } else {
@@ -165,7 +176,7 @@ function draw() {
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.rotation);
-    ctx.font = p.size + "px serif";
+    ctx.font = `${p.size}px serif`;
     ctx.fillText("❤️", 0, 0);
     ctx.restore();
   });
@@ -182,6 +193,12 @@ if (window.DeviceOrientationEvent) {
     tilt = e.gamma / 40;
   });
 }
+
+// При ресайзе пересчитываем размеры
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 </script>
 
 </body>
