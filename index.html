@@ -7,9 +7,8 @@
 
 <style>
 :root {
-  --bg-dark: #0f0f14;
+  --bg: #0f0f14;
   --accent: #ff2e63;
-  --accent-soft: #ff6b81;
   --text: #ffffff;
 }
 
@@ -18,91 +17,51 @@
   padding: 0;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 body {
   height: 100dvh;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: radial-gradient(circle at center, #1a0012 0%, #0f0f14 70%);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, #1a0012 0%, #0f0f14 70%);
-  animation: breathe 6s infinite ease-in-out;
-  transition: background 1.5s ease;
-}
-
-@keyframes breathe {
-  0% { background-size: 100% 100%; }
-  50% { background-size: 110% 110%; }
-  100% { background-size: 100% 100%; }
-}
-
-.glow {
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(255,46,99,0.4), transparent 70%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
+  color: var(--text);
 }
 
 .container {
   text-align: center;
   z-index: 2;
-  transform-style: preserve-3d;
-  transition: transform 0.2s ease-out;
 }
 
 .heart {
-  font-size: clamp(140px, 30vw, 240px);
-  line-height: 1;
-  animation: pulse 2.2s infinite cubic-bezier(.4,0,.2,1);
-  filter: drop-shadow(0 0 25px rgba(255, 46, 99, 0.7))
-          drop-shadow(0 0 50px rgba(255, 46, 99, 0.4));
-  transition: transform 0.15s ease;
+  font-size: 90vw;
+  line-height: 0.8;
+  cursor: pointer;
+  filter: drop-shadow(0 0 40px rgba(255,46,99,0.7));
+  animation: pulse 2s infinite ease-in-out;
 }
 
 @keyframes pulse {
-  0%   { transform: scale(1); }
-  25%  { transform: scale(1.08); }
-  40%  { transform: scale(0.98); }
-  60%  { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-
-.holding {
-  animation: strongPulse 0.6s infinite ease-in-out;
-}
-
-@keyframes strongPulse {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(1.25); }
-  50%  { transform: scale(0.95); }
-  70%  { transform: scale(1.35); }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
 
 .subtitle {
   margin-top: 20px;
-  font-size: 16px;
+  font-size: 18px;
   opacity: 0.6;
-  letter-spacing: 1px;
 }
 
 .message {
-  margin-top: 40px;
-  font-size: 24px;
+  margin-top: 30px;
+  font-size: 22px;
   opacity: 0;
   transition: opacity 1.5s ease;
-}
-
-.final {
-  margin-top: 30px;
-  font-size: 18px;
-  opacity: 0;
-  transition: opacity 2s ease;
 }
 
 .show {
@@ -120,58 +79,36 @@ canvas {
 
 <body>
 
-<div class="glow" id="glow"></div>
 <canvas id="canvas"></canvas>
 
-<div class="container" id="container">
+<div class="container">
   <div class="heart" id="heart">❤️</div>
   <div class="subtitle">Подержи...</div>
   <div class="message" id="message">С каждым ударом — ты.</div>
-  <div class="final" id="final">Будь моей навсегда 💌<br>14.02.2026</div>
 </div>
 
 <script>
 const heart = document.getElementById("heart");
 const message = document.getElementById("message");
-const final = document.getElementById("final");
-const glow = document.getElementById("glow");
-const container = document.getElementById("container");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 let holdTimer;
-let audioStarted = false;
-
-const audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-heartbeat-590.mp3");
-audio.loop = true;
-audio.volume = 0.4;
-
-function flashGlow() {
-  glow.style.opacity = "1";
-  setTimeout(() => glow.style.opacity = "0", 250);
-}
-
-setInterval(flashGlow, 2000);
+let particles = [];
+let gravity = 0.4;
+let tilt = 0;
 
 function startHold() {
-  heart.classList.add("holding");
-
-  if (!audioStarted) {
-    audio.play();
-    audioStarted = true;
-  }
-
-  if (navigator.vibrate) navigator.vibrate(50);
-
   holdTimer = setTimeout(() => {
+    explodeHeart();
     message.classList.add("show");
-    setTimeout(() => {
-      final.classList.add("show");
-      launchHearts();
-    }, 2000);
   }, 3000);
 }
 
 function endHold() {
-  heart.classList.remove("holding");
   clearTimeout(holdTimer);
 }
 
@@ -180,45 +117,58 @@ heart.addEventListener("touchend", endHold);
 heart.addEventListener("mousedown", startHold);
 heart.addEventListener("mouseup", endHold);
 
-function launchHearts() {
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+function explodeHeart() {
+  heart.style.display = "none";
 
-  const hearts = [];
-
-  for (let i = 0; i < 60; i++) {
-    hearts.push({
-      x: Math.random() * canvas.width,
-      y: canvas.height,
-      size: Math.random() * 24 + 12,
-      speed: Math.random() * 3 + 1,
-      opacity: Math.random()
+  for (let i = 0; i < 150; i++) {
+    particles.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 10,
+      vy: (Math.random() - 0.5) * 10,
+      size: Math.random() * 20 + 10,
+      rotation: Math.random() * 360
     });
   }
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    hearts.forEach(h => {
-      ctx.globalAlpha = h.opacity;
-      ctx.font = h.size + "px serif";
-      ctx.fillText("❤️", h.x, h.y);
-      h.y -= h.speed;
-    });
-    requestAnimationFrame(draw);
-  }
-
-  draw();
 }
 
-/* Parallax tilt for iPhone */
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  particles.forEach(p => {
+    p.vy += gravity;
+    p.vx += tilt * 0.1;
+
+    p.x += p.vx;
+    p.y += p.vy;
+
+    if (p.y > canvas.height - 20) {
+      p.y = canvas.height - 20;
+      p.vy *= -0.6;
+      p.vx *= 0.95;
+    }
+
+    if (p.x < 0 || p.x > canvas.width) {
+      p.vx *= -0.8;
+    }
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation);
+    ctx.font = p.size + "px serif";
+    ctx.fillText("❤️", 0, 0);
+    ctx.restore();
+  });
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+/* Наклон только для движения влево/вправо */
 if (window.DeviceOrientationEvent) {
-  window.addEventListener("deviceorientation", (event) => {
-    let tiltX = event.gamma / 20;
-    let tiltY = event.beta / 40;
-    container.style.transform =
-      `rotateY(${tiltX}deg) rotateX(${tiltY}deg)`;
+  window.addEventListener("deviceorientation", e => {
+    tilt = e.gamma / 30;
   });
 }
 </script>
